@@ -55,6 +55,7 @@ public class BrushMarkerOverlay extends Overlay
 	private final BrushMarkerPlugin plugin;
 	@Inject
 	ItemManager itemManager;
+
 	@Inject
 	private BrushMarkerOverlay(Client client, BrushMarkerConfig config, BrushMarkerPlugin plugin)
 	{
@@ -88,15 +89,15 @@ public class BrushMarkerOverlay extends Overlay
 			drawTile(graphics, worldPoint, tileColor);
 		}
 
-		if(config.paintMode())
+		if (config.paintMode() && client.getSelectedSceneTile() != null)
 		{
-			final Polygon poly = Perspective.getCanvasTilePoly(client, client.getSelectedSceneTile().getLocalLocation());
+			final Polygon poly = Perspective.getCanvasTileAreaPoly(client, client.getSelectedSceneTile().getLocalLocation(), config.brushSize().getSize());
 
 			if (poly != null)
 			{
-				final BufferedImage image = resize(itemManager.getImage(670),poly.getBounds().width,poly.getBounds().height);
+				final BufferedImage image = resize(itemManager.getImage(670), poly.getBounds().width, poly.getBounds().height);
 				final Point imageLoc = Perspective.getCanvasImageLocation(client, client.getSelectedSceneTile().getLocalLocation(), image, 0);
-				OverlayUtil.renderImageLocation(graphics,imageLoc,image);
+				OverlayUtil.renderImageLocation(graphics, imageLoc, image);
 				OverlayUtil.renderPolygon(graphics, poly, plugin.getColor());
 			}
 		}
@@ -104,9 +105,10 @@ public class BrushMarkerOverlay extends Overlay
 		return null;
 	}
 
-	public static BufferedImage resize(BufferedImage img, int newW, int newH) {
-		Image tmp = img.getScaledInstance(newW/2, newH/2, Image.SCALE_SMOOTH);
-		BufferedImage dimg = new BufferedImage(newW/2, newH/2, BufferedImage.TYPE_INT_ARGB);
+	public static BufferedImage resize(BufferedImage img, int newW, int newH)
+	{
+		Image tmp = img.getScaledInstance(newW / 2, newH / 2, Image.SCALE_SMOOTH);
+		BufferedImage dimg = new BufferedImage(newW / 2, newH / 2, BufferedImage.TYPE_INT_ARGB);
 
 		Graphics2D g2d = dimg.createGraphics();
 		g2d.drawImage(tmp, 0, 0, null);
@@ -135,9 +137,9 @@ public class BrushMarkerOverlay extends Overlay
 		{
 			return;
 		}
-		if(config.fillPoly())
+		if (config.fillPoly())
 		{
-			graphics.setColor(config.polyColor());
+			graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), config.polyAlpha()));
 			graphics.fillPolygon(poly);
 		}
 		OverlayUtil.renderPolygon(graphics, poly, color);

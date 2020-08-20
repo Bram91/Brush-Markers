@@ -230,7 +230,10 @@ public interface BrushMarkerConfig extends Config
 		description = "Configures whether marked tiles should be drawn on the worldmap",
 		position = 3
 	)
-	default boolean drawTilesOnWorldMap() {return false;}
+	default boolean drawTilesOnWorldMap()
+	{
+		return false;
+	}
 
 	@ConfigItem(
 		keyName = "brushreplaceMode",
@@ -254,38 +257,36 @@ public interface BrushMarkerConfig extends Config
 		return false;
 	}
 
-	@Alpha
+	@Range(
+		max = 128
+	)
 	@ConfigItem(
-		keyName = "brushPolyColor",
-		name = "Tile fill color",
-		description = "Allows you to change the fill color.",
+		keyName = "brushPolyAlpha",
+		name = "Set fill transparency",
+		description = "Allows you to change the transparency of the tile fill.",
 		position = 6
 	)
-	default Color polyColor()
+	default int polyAlpha()
 	{
-		return new Color(100,100,100,100);
+		return 64;
 	}
 
-//	@Range(
-//		min = 1,
-//		max = 3
-//	)
-//	@ConfigItem(
-//		keyName = "brushSize",
-//		name = "Brush Size",
-//		description = "Changes the brush size",
-//		position = 6
-//	)
-//	default int brushSize()
-//	{
-//		return 1;
-//	}
+	@ConfigItem(
+		keyName = "brushSize",
+		name = "Brush Size",
+		description = "Changes the brush size",
+		position = 7
+	)
+	default BrushSize brushSize()
+	{
+		return BrushSize.ONE;
+	}
 
 	@ConfigItem(
 		keyName = "brushpaintMode",
 		name = "Paint Mode",
 		description = "Enables paint mode",
-		position = 7
+		position = 8
 	)
 	default boolean paintMode()
 	{

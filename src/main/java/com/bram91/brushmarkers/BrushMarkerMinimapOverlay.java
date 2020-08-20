@@ -112,7 +112,6 @@ class BrushMarkerMinimapOverlay extends Overlay
 		{
 			return;
 		}
-
-		OverlayUtil.renderMinimapRect(client, graphics, posOnMinimap, TILE_WIDTH, TILE_HEIGHT, color);
+		OverlayUtil.renderMinimapRect(client, graphics, posOnMinimap, TILE_WIDTH - 1, TILE_HEIGHT - 1, color);
 	}
 }

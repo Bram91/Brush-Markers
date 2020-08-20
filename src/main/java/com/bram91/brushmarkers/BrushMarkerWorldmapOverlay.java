@@ -112,7 +112,7 @@ class BrushMarkerWorldmapOverlay extends Overlay
 			for (int y = yRegionMin; y < yRegionMax; y += REGION_SIZE)
 			{
 				int regionId = ((x >> 6) << 8) | (y >> 6);
-				for(final BrushMarkerPoint point :plugin.getWorldPoints(regionId))
+				for (final BrushMarkerPoint point : plugin.getWorldPoints(regionId))
 				{
 					int yTileOffset = -(yTileMin - y);
 					int xTileOffset = x + widthInTiles / 2 - worldMapPosition.getX();
@@ -121,7 +121,7 @@ class BrushMarkerWorldmapOverlay extends Overlay
 					int size = regionPixelSize / 64;
 
 					graphics.setColor(point.getColor());
-					graphics.drawRect(xPos + (point.getRegionX() * size), yPos - (point.getRegionY() * size) + size, size, size);
+					graphics.drawRect(xPos + (point.getRegionX() * size), yPos - (point.getRegionY() * size) + size, size - 1, size - 1);
 
 				}
 			}

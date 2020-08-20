@@ -61,7 +61,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 	description = "Enable marking of tiles using the Shift key",
 	tags = {"overlay", "tiles", "paint"}
 )
-public class BrushMarkerPlugin extends Plugin  implements KeyListener
+public class BrushMarkerPlugin extends Plugin implements KeyListener
 {
 	private static final String CONFIG_GROUP = "brushMarkers";
 	private static final String REGION_PREFIX = "region_";
@@ -120,7 +120,9 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 		}
 
 		// CHECKSTYLE:OFF
-		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>(){}.getType());
+		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>()
+		{
+		}.getType());
 		// CHECKSTYLE:ON
 	}
 
@@ -133,7 +135,9 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 		}
 
 		// CHECKSTYLE:OFF
-		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>(){}.getType());
+		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>()
+		{
+		}.getType());
 		// CHECKSTYLE:ON
 	}
 
@@ -169,7 +173,7 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 	 *
 	 * @param points {@link BrushMarkerPoint}s to be converted to {@link ColorTileMarker}s
 	 * @return A collection of color tile markers, converted from the passed ground marker points, accounting for local
-	 *         instance points. See {@link WorldPoint#toLocalInstance(Client, WorldPoint)}
+	 * instance points. See {@link WorldPoint#toLocalInstance(Client, WorldPoint)}
 	 */
 	private Collection<ColorTileMarker> translateToColorTileMarker(Collection<BrushMarkerPoint> points)
 	{
@@ -225,15 +229,15 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 	@Override
 	public void keyPressed(KeyEvent e)
 	{
-		if(!config.paintMode())
+		if (!config.paintMode())
 		{
 			return;
 		}
-		if(e.getKeyCode() == KeyEvent.VK_TAB)
+		if (e.getKeyCode() == KeyEvent.VK_TAB)
 		{
-			if(config.doubleColors())
+			if (config.doubleColors())
 			{
-				if(currentColor >= 11)
+				if (currentColor >= 11)
 				{
 					currentColor = 0;
 				}
@@ -244,7 +248,7 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 			}
 			else
 			{
-				if(currentColor >= 5)
+				if (currentColor >= 5)
 				{
 					currentColor = 0;
 				}
@@ -297,27 +301,32 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 
 			List<BrushMarkerPoint> brushMarkerPoints = new ArrayList<>(getPoints(regionId));
 
-			if(shiftHeld)
+			if (shiftHeld)
 			{
-				if(config.replaceMode())
+				for (BrushMarkerPoint brushMarkerPoint : getSelectedTiles(point))
 				{
-					brushMarkerPoints.remove(point);
-					brushMarkerPoints.add(point);
-				}
-				else if (!brushMarkerPoints.contains(point))
-				{
-					brushMarkerPoints.add(point);
+					if (config.replaceMode())
+					{
+						brushMarkerPoints.remove(brushMarkerPoint);
+						brushMarkerPoints.add(brushMarkerPoint);
+					}
+					else if (!brushMarkerPoints.contains(brushMarkerPoint))
+					{
+						brushMarkerPoints.add(brushMarkerPoint);
+					}
 				}
 				savePoints(regionId, brushMarkerPoints);
-
 				loadPoints();
 			}
-			else if(ctrlHeld)
+			else if (ctrlHeld)
 			{
 
-				if (brushMarkerPoints.contains(point))
+				for (BrushMarkerPoint brushMarkerPoint : getSelectedTiles(point))
 				{
-					brushMarkerPoints.remove(point);
+					if (brushMarkerPoints.contains(brushMarkerPoint))
+					{
+						brushMarkerPoints.remove(brushMarkerPoint);
+					}
 				}
 
 				savePoints(regionId, brushMarkerPoints);
@@ -327,9 +336,26 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 		}
 	}
 
+	public ArrayList<BrushMarkerPoint> getSelectedTiles(BrushMarkerPoint point)
+	{
+		ArrayList<BrushMarkerPoint> points = new ArrayList<>();
+		int size = config.brushSize().getSize();
+		int offset = size / 2;
+
+		for (int x = 0; x < size; x++)
+		{
+			for (int y = 0; y < size; y++)
+			{
+				points.add(new BrushMarkerPoint(point.getRegionId(), point.getRegionX() + x - offset, point.getRegionY() + y - offset, point.getZ(), point.getColor()));
+			}
+		}
+		return points;
+	}
+
+
 	public Color getColor()
 	{
-		switch(currentColor)
+		switch (currentColor)
 		{
 			case 0:
 				return config.markerColor1();
