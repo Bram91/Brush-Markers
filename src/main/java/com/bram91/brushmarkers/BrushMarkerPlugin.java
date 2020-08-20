@@ -90,6 +90,9 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 	private BrushMarkerMinimapOverlay minimapOverlay;
 
 	@Inject
+	private BrushMarkerWorldmapOverlay worldmapOverlay;
+
+	@Inject
 	private KeyManager keyManager;
 
 	private boolean ctrlHeld;
@@ -109,6 +112,19 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 	}
 
 	private Collection<BrushMarkerPoint> getPoints(int regionId)
+	{
+		String json = configManager.getConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId);
+		if (Strings.isNullOrEmpty(json))
+		{
+			return Collections.emptyList();
+		}
+
+		// CHECKSTYLE:OFF
+		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>(){}.getType());
+		// CHECKSTYLE:ON
+	}
+
+	public Collection<BrushMarkerPoint> getWorldPoints(int regionId)
 	{
 		String json = configManager.getConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId);
 		if (Strings.isNullOrEmpty(json))
@@ -191,6 +207,7 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 	{
 		overlayManager.add(overlay);
 		overlayManager.add(minimapOverlay);
+		overlayManager.add(worldmapOverlay);
 		keyManager.registerKeyListener(this);
 		loadPoints();
 	}
@@ -200,36 +217,9 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 	{
 		overlayManager.remove(overlay);
 		overlayManager.remove(minimapOverlay);
+		overlayManager.remove(worldmapOverlay);
 		keyManager.unregisterKeyListener(this);
 		points.clear();
-	}
-
-	private void markTile(LocalPoint localPoint)
-	{
-		if (localPoint == null)
-		{
-			return;
-		}
-
-		WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, localPoint);
-
-		int regionId = worldPoint.getRegionID();
-		BrushMarkerPoint point = new BrushMarkerPoint(regionId, worldPoint.getRegionX(), worldPoint.getRegionY(), client.getPlane(), getColor());
-		log.debug("Updating point: {} - {}", point, worldPoint);
-
-		List<BrushMarkerPoint> brushMarkerPoints = new ArrayList<>(getPoints(regionId));
-		if (brushMarkerPoints.contains(point))
-		{
-			brushMarkerPoints.remove(point);
-		}
-		else
-		{
-			brushMarkerPoints.add(point);
-		}
-
-		savePoints(regionId, brushMarkerPoints);
-
-		loadPoints();
 	}
 
 	@Override
@@ -241,14 +231,30 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 		}
 		if(e.getKeyCode() == KeyEvent.VK_TAB)
 		{
-			if(currentColor >= 5)
+			if(config.doubleColors())
 			{
-				currentColor = 0;
+				if(currentColor >= 11)
+				{
+					currentColor = 0;
+				}
+				else
+				{
+					currentColor++;
+				}
 			}
 			else
 			{
-				currentColor++;
+				if(currentColor >= 5)
+				{
+					currentColor = 0;
+				}
+				else
+				{
+					currentColor++;
+				}
 			}
+
+			e.consume();
 		}
 		else if (e.getKeyCode() == KeyEvent.VK_CONTROL)
 		{
@@ -293,11 +299,15 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 
 			if(shiftHeld)
 			{
-				if (!brushMarkerPoints.contains(point))
+				if(config.replaceMode())
+				{
+					brushMarkerPoints.remove(point);
+					brushMarkerPoints.add(point);
+				}
+				else if (!brushMarkerPoints.contains(point))
 				{
 					brushMarkerPoints.add(point);
 				}
-
 				savePoints(regionId, brushMarkerPoints);
 
 				loadPoints();
@@ -331,6 +341,18 @@ public class BrushMarkerPlugin extends Plugin  implements KeyListener
 				return config.markerColor4();
 			case 4:
 				return config.markerColor5();
+			case 6:
+				return config.markerColor7();
+			case 7:
+				return config.markerColor8();
+			case 8:
+				return config.markerColor9();
+			case 9:
+				return config.markerColor10();
+			case 10:
+				return config.markerColor11();
+			case 11:
+				return config.markerColor12();
 			default:
 				return config.markerColor6();
 		}

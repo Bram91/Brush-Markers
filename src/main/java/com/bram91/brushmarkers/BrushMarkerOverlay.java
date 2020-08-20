@@ -135,7 +135,11 @@ public class BrushMarkerOverlay extends Overlay
 		{
 			return;
 		}
-
+		if(config.fillPoly())
+		{
+			graphics.setColor(config.polyColor());
+			graphics.fillPolygon(poly);
+		}
 		OverlayUtil.renderPolygon(graphics, poly, color);
 	}
 }
