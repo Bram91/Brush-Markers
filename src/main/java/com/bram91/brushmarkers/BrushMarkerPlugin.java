@@ -305,14 +305,17 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 			{
 				for (BrushMarkerPoint brushMarkerPoint : getSelectedTiles(point))
 				{
-					if (config.replaceMode())
+					if (brushMarkerPoint.getRegionX() >= 0 && brushMarkerPoint.getRegionX() < 64 && brushMarkerPoint.getRegionY() >= 0 && brushMarkerPoint.getRegionY() < 64)
 					{
-						brushMarkerPoints.remove(brushMarkerPoint);
-						brushMarkerPoints.add(brushMarkerPoint);
-					}
-					else if (!brushMarkerPoints.contains(brushMarkerPoint))
-					{
-						brushMarkerPoints.add(brushMarkerPoint);
+						if (config.replaceMode())
+						{
+							brushMarkerPoints.remove(brushMarkerPoint);
+							brushMarkerPoints.add(brushMarkerPoint);
+						}
+						else if (!brushMarkerPoints.contains(brushMarkerPoint))
+						{
+							brushMarkerPoints.add(brushMarkerPoint);
+						}
 					}
 				}
 				savePoints(regionId, brushMarkerPoints);
