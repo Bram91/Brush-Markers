@@ -33,6 +33,7 @@ import java.awt.Image;
 import java.awt.Polygon;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
@@ -71,35 +72,42 @@ public class BrushMarkerOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		final Collection<ColorTileMarker> points = plugin.getPoints();
-		for (final ColorTileMarker point : points)
+		try
 		{
-			WorldPoint worldPoint = point.getWorldPoint();
-			if (worldPoint.getPlane() != client.getPlane())
+			for (final ColorTileMarker point : points)
 			{
-				continue;
+				WorldPoint worldPoint = point.getWorldPoint();
+				if (worldPoint.getPlane() != client.getPlane())
+				{
+					continue;
+				}
+
+				Color tileColor = point.getColor();
+				if (tileColor == null)
+				{
+					// If this is an old tile which has no color, or rememberTileColors is off, use marker color
+					tileColor = plugin.getColor();
+				}
+
+				drawTile(graphics, worldPoint, tileColor);
 			}
 
-			Color tileColor = point.getColor();
-			if (tileColor == null)
+			if (config.paintMode() && client.getSelectedSceneTile() != null)
 			{
-				// If this is an old tile which has no color, or rememberTileColors is off, use marker color
-				tileColor = plugin.getColor();
-			}
+				final Polygon poly = Perspective.getCanvasTileAreaPoly(client, client.getSelectedSceneTile().getLocalLocation(), config.brushSize().getSize());
 
-			drawTile(graphics, worldPoint, tileColor);
+				if (poly != null)
+				{
+					final BufferedImage image = resize(itemManager.getImage(670), poly.getBounds().width, poly.getBounds().height);
+					final Point imageLoc = Perspective.getCanvasImageLocation(client, client.getSelectedSceneTile().getLocalLocation(), image, 0);
+					OverlayUtil.renderImageLocation(graphics, imageLoc, image);
+					OverlayUtil.renderPolygon(graphics, poly, plugin.getColor());
+				}
+			}
 		}
-
-		if (config.paintMode() && client.getSelectedSceneTile() != null)
+		catch(ConcurrentModificationException e)
 		{
-			final Polygon poly = Perspective.getCanvasTileAreaPoly(client, client.getSelectedSceneTile().getLocalLocation(), config.brushSize().getSize());
 
-			if (poly != null)
-			{
-				final BufferedImage image = resize(itemManager.getImage(670), poly.getBounds().width, poly.getBounds().height);
-				final Point imageLoc = Perspective.getCanvasImageLocation(client, client.getSelectedSceneTile().getLocalLocation(), image, 0);
-				OverlayUtil.renderImageLocation(graphics, imageLoc, image);
-				OverlayUtil.renderPolygon(graphics, poly, plugin.getColor());
-			}
 		}
 
 		return null;

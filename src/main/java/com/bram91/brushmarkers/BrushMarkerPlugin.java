@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import lombok.AccessLevel;
@@ -98,6 +99,9 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 	private boolean ctrlHeld;
 	private boolean shiftHeld;
 	private int currentColor = 0;
+	private Stack<BrushMemento> undoStack;
+	private Stack<BrushMemento> redoStack;
+	private Color pickedColor;
 
 	private void savePoints(int regionId, Collection<BrushMarkerPoint> points)
 	{
@@ -213,6 +217,8 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		overlayManager.add(minimapOverlay);
 		overlayManager.add(worldmapOverlay);
 		keyManager.registerKeyListener(this);
+		undoStack = new Stack<>();
+		redoStack = new Stack<>();
 		loadPoints();
 	}
 
@@ -260,6 +266,31 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 
 			e.consume();
 		}
+		if (e.getKeyCode() == KeyEvent.VK_BACK_QUOTE)
+		{
+			if (config.doubleColors())
+			{
+				if (currentColor <= 0)
+				{
+					currentColor = 11;
+				}
+				else
+				{
+					currentColor--;
+				}
+			}
+			else
+			{
+				if (currentColor <= 0)
+				{
+					currentColor = 5;
+				}
+				else
+				{
+					currentColor--;
+				}
+			}
+		}
 		else if (e.getKeyCode() == KeyEvent.VK_CONTROL)
 		{
 			ctrlHeld = true;
@@ -280,6 +311,41 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		else if (e.getKeyCode() == KeyEvent.VK_SHIFT)
 		{
 			shiftHeld = false;
+		}
+		else if (config.paintMode() && e.getKeyCode() == KeyEvent.VK_Z)
+		{
+			undo();
+		}
+		else if (config.paintMode() && e.getKeyCode() == KeyEvent.VK_X)
+		{
+			redo();
+		}
+		else if (config.paintMode() && e.getKeyCode() == KeyEvent.VK_Q)
+		{
+			pickColor();
+		}
+	}
+
+	private void pickColor()
+	{
+		if(client.getSelectedSceneTile() != null)
+		{
+			WorldPoint worldPoint = WorldPoint.fromLocalInstance(client, client.getSelectedSceneTile().getLocalLocation());
+			int regionId = worldPoint.getRegionID();
+			List<BrushMarkerPoint> brushMarkerPoints = new ArrayList<>(getPoints(regionId));
+			BrushMarkerPoint point = new BrushMarkerPoint(regionId, worldPoint.getRegionX(), worldPoint.getRegionY(), client.getPlane(), getColor());
+			if(brushMarkerPoints.contains(point))
+			{
+				for (BrushMarkerPoint markerPoint : brushMarkerPoints)
+				{
+					if (markerPoint.getRegionY() == point.getRegionY() && markerPoint.getRegionX() == point.getRegionX())
+					{
+						pickedColor = markerPoint.getColor();
+						currentColor = 12;
+						break;
+					}
+				}
+			}
 		}
 	}
 
@@ -307,6 +373,25 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 				{
 					if (brushMarkerPoint.getRegionX() >= 0 && brushMarkerPoint.getRegionX() < 64 && brushMarkerPoint.getRegionY() >= 0 && brushMarkerPoint.getRegionY() < 64)
 					{
+						redoStack.clear();
+						if (config.replaceMode() && brushMarkerPoints.contains(brushMarkerPoint))
+						{
+							for (BrushMarkerPoint markerPoint : brushMarkerPoints)
+							{
+								if (markerPoint.getRegionY() == brushMarkerPoint.getRegionY() && markerPoint.getRegionX() == brushMarkerPoint.getRegionX())
+								{
+									if (undoStack.size() == 0 || !undoStack.peek().getPoint().equals(markerPoint))
+									{
+										undoStack.push(new BrushMemento(markerPoint, false));
+									}
+									break;
+								}
+							}
+						}
+						if (undoStack.size() == 0 || !undoStack.peek().getPoint().equals(brushMarkerPoint))
+						{
+							undoStack.push(new BrushMemento(brushMarkerPoint, true));
+						}
 						if (config.replaceMode())
 						{
 							brushMarkerPoints.remove(brushMarkerPoint);
@@ -323,9 +408,20 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 			}
 			else if (ctrlHeld)
 			{
-
+				redoStack.clear();
 				for (BrushMarkerPoint brushMarkerPoint : getSelectedTiles(point))
 				{
+					if (brushMarkerPoints.contains(brushMarkerPoint))
+					{
+						for (BrushMarkerPoint markerPoint : brushMarkerPoints)
+						{
+							if (markerPoint.getRegionY() == brushMarkerPoint.getRegionY() && markerPoint.getRegionX() == brushMarkerPoint.getRegionX())
+							{
+								undoStack.push(new BrushMemento(markerPoint, false));
+								break;
+							}
+						}
+					}
 					if (brushMarkerPoints.contains(brushMarkerPoint))
 					{
 						brushMarkerPoints.remove(brushMarkerPoint);
@@ -352,9 +448,59 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 				points.add(new BrushMarkerPoint(point.getRegionId(), point.getRegionX() + x - offset, point.getRegionY() + y - offset, point.getZ(), point.getColor()));
 			}
 		}
+		System.out.println(size+"-"+offset);
 		return points;
 	}
 
+	public void undo()
+	{
+		if (undoStack.size() == 0)
+		{
+			return;
+		}
+		BrushMemento memento = undoStack.pop();
+		redoStack.push(memento);
+		List<BrushMarkerPoint> brushMarkerPoints = new ArrayList<>(getPoints(memento.getPoint().getRegionId()));
+		if (!memento.isDraw())
+		{
+			while(brushMarkerPoints.contains(memento.getPoint()))
+			{
+				brushMarkerPoints.remove(memento.getPoint());
+			}
+			brushMarkerPoints.add(memento.getPoint());
+		}
+		else
+		{
+			while(brushMarkerPoints.contains(memento.getPoint()))
+			{
+				brushMarkerPoints.remove(memento.getPoint());
+			}
+		}
+		savePoints(memento.getPoint().getRegionId(), brushMarkerPoints);
+		loadPoints();
+	}
+
+	public void redo()
+	{
+		if (redoStack.size() == 0)
+		{
+			return;
+		}
+		BrushMemento memento = redoStack.pop();
+		undoStack.push(memento);
+		List<BrushMarkerPoint> brushMarkerPoints = new ArrayList<>(getPoints(memento.getPoint().getRegionId()));
+		if (memento.isDraw())
+		{
+			brushMarkerPoints.remove(memento.getPoint());
+			brushMarkerPoints.add(memento.getPoint());
+		}
+		else
+		{
+			brushMarkerPoints.remove(memento.getPoint());
+		}
+		savePoints(memento.getPoint().getRegionId(), brushMarkerPoints);
+		loadPoints();
+	}
 
 	public Color getColor()
 	{
@@ -382,6 +528,8 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 				return config.markerColor11();
 			case 11:
 				return config.markerColor12();
+			case 12:
+				return pickedColor;
 			default:
 				return config.markerColor6();
 		}
