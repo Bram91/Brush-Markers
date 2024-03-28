@@ -25,28 +25,20 @@
  */
 package com.bram91.brushmarkers;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
-import java.util.Collection;
-import javax.inject.Inject;
 import net.runelite.api.Client;
-import net.runelite.api.Perspective;
 import net.runelite.api.Point;
-import net.runelite.api.RenderOverview;
-import net.runelite.api.coords.LocalPoint;
-import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetID;
-import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.api.worldmap.WorldMap;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayPriority;
-import net.runelite.client.ui.overlay.OverlayUtil;
+
+import javax.inject.Inject;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 class BrushMarkerWorldmapOverlay extends Overlay
 {
@@ -65,9 +57,9 @@ class BrushMarkerWorldmapOverlay extends Overlay
 		this.config = config;
 		this.plugin = plugin;
 		setPosition(OverlayPosition.DYNAMIC);
-		setPriority(OverlayPriority.HIGH);
+		setPriority(0.0f);
 		setLayer(OverlayLayer.MANUAL);
-		drawAfterInterface(WidgetID.WORLD_MAP_GROUP_ID);
+		drawAfterInterface(InterfaceID.WORLD_MAP);
 	}
 
 	@Override
@@ -85,9 +77,9 @@ class BrushMarkerWorldmapOverlay extends Overlay
 
 	private void drawOnWorldMap(Graphics2D graphics)
 	{
-		RenderOverview ro = client.getRenderOverview();
-		Widget map = client.getWidget(WidgetInfo.WORLD_MAP_VIEW);
-		Float pixelsPerTile = ro.getWorldMapZoom();
+		WorldMap worldMap = client.getWorldMap();
+		Widget map = client.getWidget(ComponentID.WORLD_MAP_MAPVIEW);
+		float pixelsPerTile = worldMap.getWorldMapZoom();
 		if (map == null)
 		{
 			return;
@@ -99,7 +91,7 @@ class BrushMarkerWorldmapOverlay extends Overlay
 		int widthInTiles = (int) Math.ceil(worldMapRect.getWidth() / pixelsPerTile);
 		int heightInTiles = (int) Math.ceil(worldMapRect.getHeight() / pixelsPerTile);
 
-		Point worldMapPosition = ro.getWorldMapPosition();
+		Point worldMapPosition = worldMap.getWorldMapPosition();
 
 		// Offset in tiles from anchor sides
 		int yTileMin = worldMapPosition.getY() - heightInTiles / 2;
