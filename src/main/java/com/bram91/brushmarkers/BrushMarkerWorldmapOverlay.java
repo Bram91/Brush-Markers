@@ -57,7 +57,7 @@ class BrushMarkerWorldmapOverlay extends Overlay
 		this.config = config;
 		this.plugin = plugin;
 		setPosition(OverlayPosition.DYNAMIC);
-		setPriority(0.0f);
+		setPriority(PRIORITY_LOW);
 		setLayer(OverlayLayer.MANUAL);
 		drawAfterInterface(InterfaceID.WORLD_MAP);
 	}
