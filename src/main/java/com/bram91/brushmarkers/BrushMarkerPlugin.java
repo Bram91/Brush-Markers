@@ -44,7 +44,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameStateChanged;
@@ -67,7 +66,8 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 	private static final String CONFIG_GROUP = "brushMarkers";
 	private static final String REGION_PREFIX = "region_";
 
-	private static final Gson GSON = new Gson();
+	@Inject
+	private Gson gson;
 
 	@Getter(AccessLevel.PACKAGE)
 	private final List<ColorTileMarker> points = new ArrayList<>();
@@ -111,7 +111,7 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 			return;
 		}
 
-		String json = GSON.toJson(points);
+		String json = gson.toJson(points);
 		configManager.setConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId, json);
 	}
 
@@ -124,7 +124,7 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		}
 
 		// CHECKSTYLE:OFF
-		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>()
+		return gson.fromJson(json, new TypeToken<List<BrushMarkerPoint>>()
 		{
 		}.getType());
 		// CHECKSTYLE:ON
@@ -139,7 +139,7 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		}
 
 		// CHECKSTYLE:OFF
-		return GSON.fromJson(json, new TypeToken<List<BrushMarkerPoint>>()
+		return gson.fromJson(json, new TypeToken<List<BrushMarkerPoint>>()
 		{
 		}.getType());
 		// CHECKSTYLE:ON
