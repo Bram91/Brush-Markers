@@ -25,9 +25,11 @@
  */
 package com.bram91.brushmarkers;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 import java.util.Collection;
 import javax.inject.Inject;
 import net.runelite.api.Client;
@@ -38,13 +40,15 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayUtil;
 
 class BrushMarkerMinimapOverlay extends Overlay
 {
-	private static final int MAX_DRAW_DISTANCE = 16;
-	private static final int TILE_WIDTH = 4;
-	private static final int TILE_HEIGHT = 4;
+	private static final int[][] RECT_TRANSFORMS = {
+		{ 0, 0 },
+		{ 0, Perspective.LOCAL_TILE_SIZE },
+		{ Perspective.LOCAL_TILE_SIZE, Perspective.LOCAL_TILE_SIZE },
+		{ Perspective.LOCAL_TILE_SIZE, 0 }
+	};
 
 	private final Client client;
 	private final BrushMarkerConfig config;
@@ -93,24 +97,29 @@ class BrushMarkerMinimapOverlay extends Overlay
 
 	private void drawOnMinimap(Graphics2D graphics, WorldPoint point, Color color)
 	{
-		WorldPoint playerLocation = client.getLocalPlayer().getWorldLocation();
-
-		if (point.distanceTo(playerLocation) >= MAX_DRAW_DISTANCE)
+		if (!point.isInScene(client))
 		{
 			return;
 		}
 
-		LocalPoint lp = LocalPoint.fromWorld(client, point);
-		if (lp == null)
+		int x = (point.getX() - client.getBaseX()) << Perspective.LOCAL_COORD_BITS;
+		int y = (point.getY() - client.getBaseY()) << Perspective.LOCAL_COORD_BITS;
+		int maxDist = (int) ((20 << Perspective.LOCAL_COORD_BITS) * 4.0 / client.getMinimapZoom());
+
+		Polygon rect = new Polygon();
+		for (int[] transform : RECT_TRANSFORMS)
 		{
-			return;
+			LocalPoint vertex = new LocalPoint(x + transform[0], y + transform[1]);
+			Point mp = Perspective.localToMinimap(client, vertex, maxDist);
+			if (mp == null)
+			{
+				return;
+			}
+			rect.addPoint(mp.getX(), mp.getY());
 		}
 
-		Point posOnMinimap = Perspective.localToMinimap(client, lp);
-		if (posOnMinimap == null)
-		{
-			return;
-		}
-		OverlayUtil.renderMinimapRect(client, graphics, posOnMinimap, TILE_WIDTH - 1, TILE_HEIGHT - 1, color);
+		graphics.setColor(color);
+		graphics.setStroke(new BasicStroke());
+		graphics.drawPolygon(rect);
 	}
 }
