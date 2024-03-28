@@ -422,10 +422,7 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 							}
 						}
 					}
-					if (brushMarkerPoints.contains(brushMarkerPoint))
-					{
-						brushMarkerPoints.remove(brushMarkerPoint);
-					}
+					brushMarkerPoints.remove(brushMarkerPoint);
 				}
 
 				savePoints(regionId, brushMarkerPoints);
