@@ -448,7 +448,7 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 				points.add(new BrushMarkerPoint(point.getRegionId(), point.getRegionX() + x - offset, point.getRegionY() + y - offset, point.getZ(), point.getColor()));
 			}
 		}
-		System.out.println(size+"-"+offset);
+		log.trace("{}-{}", size, offset);
 		return points;
 	}
 
