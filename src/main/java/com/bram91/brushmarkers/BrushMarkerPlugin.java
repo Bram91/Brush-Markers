@@ -120,21 +120,6 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		configManager.setConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId, json);
 	}
 
-	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.brushHotkey())
-	{
-		@Override
-		public void hotkeyPressed()
-		{
-
-		}
-
-		@Override
-		public void hotkeyReleased()
-		{
-			configManager.setConfiguration(CONFIG_GROUP, PAINT_MODE, !config.paintMode());
-		}
-	};
-
 	private Collection<BrushMarkerPoint> getPoints(int regionId)
 	{
 		String json = configManager.getConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId);
@@ -238,7 +223,6 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		overlayManager.add(minimapOverlay);
 		overlayManager.add(worldmapOverlay);
 		keyManager.registerKeyListener(this);
-		keyManager.registerKeyListener(hotkeyListener);
 		undoStack = new Stack<>();
 		redoStack = new Stack<>();
 		loadPoints();
@@ -252,7 +236,6 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		overlayManager.remove(minimapOverlay);
 		overlayManager.remove(worldmapOverlay);
 		keyManager.unregisterKeyListener(this);
-		keyManager.unregisterKeyListener(hotkeyListener);
 		points.clear();
 	}
 
@@ -347,6 +330,11 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		else if (config.paintMode() && e.getKeyCode() == KeyEvent.VK_Q)
 		{
 			pickColor();
+		}
+
+		else if(config.brushHotkey() != null && config.brushHotkey().getKeyCode() == e.getKeyCode())
+		{
+			configManager.setConfiguration(CONFIG_GROUP, PAINT_MODE, !config.paintMode());
 		}
 	}
 
