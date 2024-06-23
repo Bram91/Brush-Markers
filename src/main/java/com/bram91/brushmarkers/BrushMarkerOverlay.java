@@ -26,6 +26,7 @@
  */
 package com.bram91.brushmarkers;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -114,6 +115,10 @@ public class BrushMarkerOverlay extends Overlay
 
 	public static BufferedImage resize(BufferedImage img, int newW, int newH)
 	{
+		if(newH > img.getHeight() || newW > img.getWidth())
+		{
+			return img;
+		}
 		Image tmp = img.getScaledInstance(newW / 2, newH / 2, Image.SCALE_SMOOTH);
 		BufferedImage dimg = new BufferedImage(newW / 2, newH / 2, BufferedImage.TYPE_INT_ARGB);
 
@@ -149,6 +154,6 @@ public class BrushMarkerOverlay extends Overlay
 			graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), config.polyAlpha()));
 			graphics.fillPolygon(poly);
 		}
-		OverlayUtil.renderPolygon(graphics, poly, color);
+		OverlayUtil.renderPolygon(graphics, poly, color, new BasicStroke((float) config.strokeWidth()));
 	}
 }

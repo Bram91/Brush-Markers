@@ -32,6 +32,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.config.Range;
 
 @ConfigGroup("brushMarkers")
@@ -272,10 +273,21 @@ public interface BrushMarkerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "brushBorderWidth",
+		name = "Tile border width",
+		description = "Set the width of the tile borders.",
+		position = 7
+	)
+	default double strokeWidth()
+	{
+		return 2;
+	}
+
+	@ConfigItem(
 		keyName = "brushSize",
 		name = "Brush Size",
 		description = "Changes the brush size",
-		position = 7
+		position = 8
 	)
 	default BrushSize brushSize()
 	{
@@ -286,10 +298,21 @@ public interface BrushMarkerConfig extends Config
 		keyName = "brushpaintMode",
 		name = "Paint Mode",
 		description = "Enables paint mode",
-		position = 8
+		position = 9
 	)
 	default boolean paintMode()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "brushHotkey",
+		name = "Brush Hotkey",
+		description = "Enables paint mode through a hotkey",
+		position = 10
+	)
+	default Keybind brushHotkey()
+	{
+		return null;
 	}
 }

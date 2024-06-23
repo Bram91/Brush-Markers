@@ -54,6 +54,7 @@ import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.HotkeyListener;
 
 @Slf4j
 @PluginDescriptor(
@@ -65,6 +66,7 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 {
 	private static final String CONFIG_GROUP = "brushMarkers";
 	private static final String REGION_PREFIX = "region_";
+	private static final String PAINT_MODE = "brushpaintMode";
 
 	@Inject
 	private Gson gson;
@@ -86,6 +88,9 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 
 	@Inject
 	private BrushMarkerOverlay overlay;
+
+	@Inject
+	private PaintModeOverlay paintOverlay;
 
 	@Inject
 	private BrushMarkerMinimapOverlay minimapOverlay;
@@ -114,6 +119,21 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 		String json = gson.toJson(points);
 		configManager.setConfiguration(CONFIG_GROUP, REGION_PREFIX + regionId, json);
 	}
+
+	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.brushHotkey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+
+		}
+
+		@Override
+		public void hotkeyReleased()
+		{
+			configManager.setConfiguration(CONFIG_GROUP, PAINT_MODE, !config.paintMode());
+		}
+	};
 
 	private Collection<BrushMarkerPoint> getPoints(int regionId)
 	{
@@ -214,9 +234,11 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
+		overlayManager.add(paintOverlay);
 		overlayManager.add(minimapOverlay);
 		overlayManager.add(worldmapOverlay);
 		keyManager.registerKeyListener(this);
+		keyManager.registerKeyListener(hotkeyListener);
 		undoStack = new Stack<>();
 		redoStack = new Stack<>();
 		loadPoints();
@@ -226,9 +248,11 @@ public class BrushMarkerPlugin extends Plugin implements KeyListener
 	protected void shutDown()
 	{
 		overlayManager.remove(overlay);
+		overlayManager.remove(paintOverlay);
 		overlayManager.remove(minimapOverlay);
 		overlayManager.remove(worldmapOverlay);
 		keyManager.unregisterKeyListener(this);
+		keyManager.unregisterKeyListener(hotkeyListener);
 		points.clear();
 	}
 
