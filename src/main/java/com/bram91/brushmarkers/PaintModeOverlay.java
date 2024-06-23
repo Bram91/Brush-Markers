@@ -35,9 +35,12 @@ public class PaintModeOverlay extends OverlayPanel
 		panelComponent.getChildren().add(LineComponent.builder()
 			.left("Brush mode enabled")
 			.build());
-		panelComponent.getChildren().add(LineComponent.builder()
-			.left("Hotkey set to: " + config.brushHotkey())
-			.build());
+		if(config.brushHotkey() != null)
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left("Hotkey set to: " + config.brushHotkey())
+				.build());
+		}
 
 		panelComponent.setBackgroundColor(DANGER);
 
